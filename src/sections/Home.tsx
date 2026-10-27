@@ -128,7 +128,7 @@ export function Home() {
                 <Sparkle className="anim-twinkle absolute right-1 bottom-28 w-3" style={timing('twinkle', 4.5, 1.2)} />
 
                 <PortraitFrame
-                  src="/images/savi-portrait.png"
+                  src="/images/savi-portrait.jpg"
                   alt="Savi smiling in a red gingham top, standing in an open iron gateway framed by white climbing flowers"
                   caption="Swasti “Savi” Srivastava"
                 />

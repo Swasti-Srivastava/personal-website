@@ -2104,3 +2104,30 @@
     translate: none;
   }
 }
+
+/* ==========================================================================
+   Performance
+   ========================================================================== */
+
+/* Sections well off screen are marked by Section; their decorative CSS
+   animations pause until they come back into view. */
+.sky[data-offscreen] *,
+.sky[data-offscreen] *::before,
+.sky[data-offscreen] *::after {
+  animation-play-state: paused !important;
+}
+
+@layer components {
+  /* On touch devices and narrower screens, skip the backdrop blur behind the
+     skill panels: with rain animating beneath them it must be recomputed every
+     frame, which is costly on phones. A touch more opacity keeps the panels
+     looking the same. */
+  @media (hover: none), (width < 64rem) {
+    .skill-panel {
+      backdrop-filter: none;
+      background:
+        linear-gradient(160deg, rgb(119 124 163 / 0.16), transparent 55%),
+        rgb(23 38 56 / 0.66);
+    }
+  }
+}

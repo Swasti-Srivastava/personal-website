@@ -330,8 +330,17 @@ export function MoonlitTerrace() {
             <rect key={`${x}-${y}`} x={x} y={y} width="2.4" height="3.2" rx="0.6" />
           ))}
         </g>
-        {/* Light reflected on the water, gently shimmering. */}
-        <g className="lake-shimmer" fill="#ffd9a0">
+      </svg>
+
+      {/* Light reflected on the water, gently shimmering. A separate overlay
+          with the same geometry, so the shimmer animates on its own layer
+          instead of repainting the filtered landscape every frame. */}
+      <svg
+        viewBox="0 0 1440 470"
+        preserveAspectRatio="xMaxYMax slice"
+        className="lake-shimmer absolute inset-x-0 bottom-[clamp(4.5rem,8vw,7.5rem)] h-[min(32rem,30%)] w-full"
+      >
+        <g fill="#ffd9a0">
           {LIGHTS.filter((_, i) => i % 2 === 0).map(({ x, y }) => (
             <rect key={`r${x}-${y}`} x={x - 0.4} y={402 + (400 - y) * 0.25} width="2.6" height={6 + ((x * 7) % 9)} rx="1.2" opacity="0.45" />
           ))}

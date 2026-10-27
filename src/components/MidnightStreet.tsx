@@ -119,16 +119,25 @@ function Facade({ className = '' }: { className?: string }) {
           <path key={i} d={`M${46 + i * 19} 372v32`} strokeWidth="2" />
         ))}
       </g>
-      {/* Wisteria along the roofline. */}
+    </svg>
+  )
+}
+
+// The wisteria hanging along the top of the facade. An overlay with the
+// facade's horizontal scale, so its sway moves only this small layer instead
+// of repainting the whole building every frame. It's anchored to the top
+// (the building itself is anchored to the street and cropped from above), so
+// the vine always runs along the top of whatever part of the building shows.
+function FacadeWisteria({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 600 900" preserveAspectRatio="xMaxYMin slice" className={className}>
       <path d="M0 28C80 40 160 18 260 30S440 40 600 24" stroke="#4d5a3a" strokeWidth="6" fill="none" />
-      <g className="facade-wisteria">
-        {WISTERIA.map(([x, y, length]) => (
-          <path key={x} d={`M${x} ${y}v${length}`} stroke="#4d5a3a" strokeWidth="1.2" />
-        ))}
-        {BLOOMS.map((b, i) => (
-          <ellipse key={i} cx={b.x} cy={b.y} rx={b.r} ry={b.r * 0.8} fill={b.color} opacity="0.92" />
-        ))}
-      </g>
+      {WISTERIA.map(([x, y, length]) => (
+        <path key={x} d={`M${x} ${y}v${length}`} stroke="#4d5a3a" strokeWidth="1.2" />
+      ))}
+      {BLOOMS.map((b, i) => (
+        <ellipse key={i} cx={b.x} cy={b.y} rx={b.r} ry={b.r * 0.8} fill={b.color} opacity="0.92" />
+      ))}
     </svg>
   )
 }
@@ -231,11 +240,6 @@ export function MidnightStreet() {
           ))}
         </g>
         <rect x="0" y="300" width="1440" height="80" fill={`url(#${id}-water)`} />
-        <g className="lake-shimmer" fill="#ffd9a0">
-          {LIGHTS.filter((_, i) => i % 2 === 0).map(({ x, y }) => (
-            <rect key={`r${x}-${y}`} x={x - 0.4} y={302 + (300 - y) * 0.3} width="2.6" height={7 + ((x * 7) % 10)} rx="1.2" opacity="0.4" />
-          ))}
-        </g>
         {/* Waterfront railing. */}
         <g stroke="#0f1724" strokeWidth="3">
           <path d="M0 346H1440" />
@@ -248,10 +252,25 @@ export function MidnightStreet() {
         </g>
       </svg>
 
+      {/* Shimmering reflections, as an overlay with the shore's geometry so
+          the shimmer animates on its own layer. */}
+      <svg
+        viewBox="0 0 1440 380"
+        preserveAspectRatio="xMaxYMax slice"
+        className="lake-shimmer absolute inset-x-0 bottom-[clamp(7rem,13vw,11rem)] h-[min(24rem,32%)] w-full"
+      >
+        <g fill="#ffd9a0">
+          {LIGHTS.filter((_, i) => i % 2 === 0).map(({ x, y }) => (
+            <rect key={`r${x}-${y}`} x={x - 0.4} y={302 + (300 - y) * 0.3} width="2.6" height={7 + ((x * 7) % 10)} rx="1.2" opacity="0.4" />
+          ))}
+        </g>
+      </svg>
+
       {/* The old building beside the booth (wide screens, where the booth
           stands to the left of the form). */}
       <div className="street-facade absolute bottom-[clamp(5.5rem,11.5vw,9.5rem)] left-0 top-[16%] hidden w-[min(44vw,40rem)] lg:block">
-        <Facade className="block size-full" />
+        <Facade className="absolute inset-0 block size-full" />
+        <FacadeWisteria className="facade-wisteria absolute inset-0 block size-full" />
       </div>
 
       {/* Wet cobblestone street with lamp-lit reflections. */}

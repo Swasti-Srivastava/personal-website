@@ -39,6 +39,8 @@ export function ExperienceTimeline() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     let markerYs: number[] = []
     let frame = 0
+    // Only follow scrolling while the timeline is on or near the screen.
+    let near = false
 
     const layout = () => {
       const box = list.getBoundingClientRect()
@@ -62,13 +64,23 @@ export function ExperienceTimeline() {
       path.style.strokeDashoffset = String(1 - progress)
       const reach = progress * box.height
       list.querySelectorAll<HTMLElement>('.timeline-marker').forEach((marker, i) => {
-        marker.dataset.lit = String(reach >= markerYs[i] - 4)
+        const lit = String(reach >= markerYs[i] - 4)
+        if (marker.dataset.lit !== lit) marker.dataset.lit = lit
       })
     }
 
     const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update)
+      if (near && !frame) frame = requestAnimationFrame(update)
     }
+
+    const proximity = new IntersectionObserver(
+      ([entry]) => {
+        near = entry.isIntersecting
+        if (near) onScroll()
+      },
+      { rootMargin: '50% 0px' },
+    )
+    proximity.observe(list)
 
     const resize = new ResizeObserver(layout)
     resize.observe(list)
@@ -79,6 +91,7 @@ export function ExperienceTimeline() {
 
     return () => {
       resize.disconnect()
+      proximity.disconnect()
       window.removeEventListener('scroll', onScroll)
       reduced.removeEventListener('change', update)
       cancelAnimationFrame(frame)

@@ -43,21 +43,27 @@ export function TelephoneBooth({ className = '' }: { className?: string }) {
           <stop offset="0%" stopColor="#fff3d6" />
           <stop offset="100%" stopColor="#f3d29a" />
         </linearGradient>
-        <filter id={`${id}-bloom`} x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="22" />
-        </filter>
+        {/* Glows are radial gradients rather than blur filters: the booth
+            redraws every frame while it rings, and gradients cost nothing to
+            redraw while large blurs are expensive, especially on phones. */}
+        <radialGradient id={`${id}-bloom`}>
+          <stop offset="0%" stopColor="#f2b56e" stopOpacity="1" />
+          <stop offset="55%" stopColor="#f2b56e" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#f2b56e" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-pool`}>
+          <stop offset="0%" stopColor="#f2b56e" stopOpacity="1" />
+          <stop offset="100%" stopColor="#f2b56e" stopOpacity="0" />
+        </radialGradient>
         <radialGradient id={`${id}-lampglow`}>
           <stop offset="0%" stopColor="#f5c27f" stopOpacity="0.32" />
           <stop offset="45%" stopColor="#f5c27f" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#f5c27f" stopOpacity="0" />
         </radialGradient>
-        <filter id={`${id}-soft`} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="4" />
-        </filter>
       </defs>
 
       {/* Warm light spilling from the booth. */}
-      <ellipse className="booth-bloom" cx="285" cy="380" rx="170" ry="250" fill="#f2b56e" opacity="0.28" filter={`url(#${id}-bloom)`} />
+      <ellipse className="booth-bloom" cx="285" cy="380" rx="200" ry="290" fill={`url(#${id}-bloom)`} opacity="0.28" />
 
       {/* Streetlamp to the right of the booth. */}
       <g>
@@ -178,7 +184,7 @@ export function TelephoneBooth({ className = '' }: { className?: string }) {
       </g>
 
       {/* Light pooled on the wet stones at the booth's feet. */}
-      <ellipse cx="285" cy="626" rx="150" ry="12" fill="#f2b56e" opacity="0.35" filter={`url(#${id}-soft)`} />
+      <ellipse cx="285" cy="626" rx="162" ry="16" fill={`url(#${id}-pool)`} opacity="0.4" />
     </svg>
   )
 }

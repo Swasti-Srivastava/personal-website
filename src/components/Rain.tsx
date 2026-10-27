@@ -75,13 +75,18 @@ export function Rain({ preset = 'drizzle', density = 1, rampIn = false, classNam
       drop.x = random(-height * slant, width)
     }
 
-    const ramp = () => {
-      if (!rampIn) return 1
+    // How far the section has scrolled in (0–1), for rampIn. Measured on
+    // scroll and resize rather than every frame, so animating never forces a
+    // layout pass.
+    let ramp = 1
+    const measureRamp = () => {
+      if (!rampIn) return
       const top = wrapper.getBoundingClientRect().top
-      return Math.min(1, Math.max(0, (window.innerHeight - top) / window.innerHeight))
+      ramp = Math.min(1, Math.max(0, (window.innerHeight - top) / window.innerHeight))
     }
 
     const resize = () => {
+      measureRamp()
       const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
       width = canvas.clientWidth
       height = canvas.clientHeight
@@ -99,7 +104,7 @@ export function Rain({ preset = 'drizzle', density = 1, rampIn = false, classNam
 
     // One path per layer, so each layer is a single stroke call.
     const draw = () => {
-      const shown = Math.round(drops.length * (0.3 + 0.7 * ramp()))
+      const shown = Math.round(drops.length * (0.3 + 0.7 * ramp))
       context.clearRect(0, 0, width, height)
       layers.forEach((layer, index) => {
         context.beginPath()
@@ -142,6 +147,7 @@ export function Rain({ preset = 'drizzle', density = 1, rampIn = false, classNam
 
     const visibility = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting
+      measureRamp()
       sync()
     })
     const sizing = new ResizeObserver(resize)
@@ -149,6 +155,7 @@ export function Rain({ preset = 'drizzle', density = 1, rampIn = false, classNam
     sizing.observe(canvas)
     document.addEventListener('visibilitychange', sync)
     reduced.addEventListener('change', sync)
+    if (rampIn) window.addEventListener('scroll', measureRamp, { passive: true })
 
     return () => {
       stop()
@@ -156,6 +163,7 @@ export function Rain({ preset = 'drizzle', density = 1, rampIn = false, classNam
       sizing.disconnect()
       document.removeEventListener('visibilitychange', sync)
       reduced.removeEventListener('change', sync)
+      window.removeEventListener('scroll', measureRamp)
     }
   }, [preset, density, rampIn])
 
