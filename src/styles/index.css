@@ -1,0 +1,2106 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design tokens
+   `static` keeps every variable in the output even if no utility uses it,
+   because Section reads the sky colors by name at runtime (see lib/sky.ts).
+   ========================================================================== */
+
+@theme static {
+  /* Typography */
+  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+
+  --text-display: clamp(3.2rem, 1.45rem + 5.65vw, 7.3rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.015em;
+  --text-title: clamp(2.5rem, 1.5rem + 3.4vw, 4.75rem);
+  --text-title--line-height: 1;
+  --text-title--letter-spacing: -0.01em;
+  --text-lede: clamp(1.125rem, 1rem + 0.45vw, 1.375rem);
+  --text-lede--line-height: 1.55;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.7;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.22em;
+  --text-hand: clamp(1.375rem, 1.1rem + 0.7vw, 1.875rem);
+  --text-hand--line-height: 1.1;
+
+  /* Layout */
+  --container-page: 80rem;
+  --spacing-gutter: clamp(1.25rem, 5vw, 5rem);
+  --spacing-section: clamp(6rem, 3rem + 9vw, 11rem);
+
+  /* Motion */
+  --ease-gentle: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* --------------------------------------------------------------------
+     Day-to-night palette. Each phase has:
+       sky       the section's main background (the anchor color)
+       sky-deep  the tone the section drifts toward before handing off
+       accent    pure accent, for small details (hand notes, flourishes)
+       wash      translucent watercolor tint painted over the sky
+       ink       text color
+     Change any of these and the gradients update everywhere.
+     -------------------------------------------------------------------- */
+
+  /* Home / About — morning */
+  --color-morning-sky: #f7f0e3;
+  --color-morning-sky-deep: #f2dfcb;
+  --color-morning-accent: #e8bfa5;
+  --color-morning-wash: rgb(232 191 165 / 0.38);
+  --color-morning-ink: #382c2a;
+
+  /* Projects — golden hour, painted as a pink sunset: dusty rose sky with
+     peach light, a pastel-orange sun, and peach cards that turn ivory. */
+  --color-golden-sky: #dfaaaa;
+  --color-golden-sky-deep: #cf8e95;
+  --color-golden-accent: #b97658;
+  --color-golden-wash: rgb(246 190 150 / 0.34);
+  --color-golden-ink: #443029;
+  --color-golden-sun: #f6b886;
+  --color-golden-peach: #f5c09c;
+  --color-golden-coral: #eb9d8c;
+  --color-golden-blush: #f1b6b8;
+  --color-golden-lavender: #bba7cf;
+  --color-golden-rose: #d27a88;
+  --color-golden-leaf: #87905f;
+  --color-golden-card: #f4c5a8;
+  --color-golden-card-hover: #fff8ee;
+
+  /* Experience — dusk into evening: dusty purple fading to periwinkle,
+     with peach light low on the horizon. Sky values keep the light ink at
+     ≥ 4.9:1. */
+  --color-dusk-sky: #6c5f8e;
+  --color-dusk-sky-deep: #4f5a82;
+  --color-dusk-accent: #b38b91;
+  --color-dusk-wash: rgb(240 172 146 / 0.16);
+  --color-dusk-ink: #f7ede4;
+  --color-dusk-lavender: #9d8fbf;
+  --color-dusk-mauve: #b48aa6;
+  --color-dusk-peach: #f0b394;
+  --color-dusk-periwinkle: #6f7bb0;
+  --color-dusk-plum: #3f3760;
+  --color-dusk-glow: #ffd9a3;
+  /* Experience cards: muted vintage sage, lightening on hover. */
+  --color-dusk-card: #b9bfa9;
+  --color-dusk-card-hover: #dfe3d2;
+  --color-dusk-card-border: #929b83;
+  --color-dusk-card-ink: #343d35;
+  --color-dusk-card-muted: #424c3d;
+  --color-dusk-line: #e9c58f;
+
+  /* Skills — blue hour */
+  /* Skills: the sun has set. Periwinkle deepening to midnight, lit by a
+     crescent moon, warm town lights, and lantern amber. */
+  --color-blue-sky: #3a4470;
+  --color-blue-sky-deep: #1f2a45;
+  --color-blue-accent: #a7a0b7;
+  --color-blue-wash: rgb(119 124 163 / 0.2);
+  --color-blue-ink: #f3ebe2;
+  --color-blue-midnight: #172638;
+  --color-blue-slate: #526477;
+  --color-blue-periwinkle: #777ca3;
+  --color-blue-lavender: #a7a0b7;
+  --color-blue-ivory: #f7f0e3;
+  --color-blue-amber: #d5a36b;
+  --color-blue-wisteria: #b79fd6;
+
+  /* Contact — rainy night */
+  --color-night-sky: #172638;
+  --color-night-sky-deep: #111c2b;
+  --color-night-accent: #d5a36b;
+  --color-night-wash: rgb(213 163 107 / 0.09);
+  --color-night-ink: #f7ede0;
+}
+
+:root {
+  --duration-gentle: 450ms;
+
+  /* Paper grain: tiny tiled SVG noise, rendered once and cached by the browser. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .26 0 0 0 0 .2 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  html {
+    /* Matches the first and last sky so overscroll never flashes white. */
+    background: linear-gradient(var(--color-morning-sky) 50%, var(--color-night-sky-deep) 50%);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    color: var(--color-morning-ink);
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent, var(--color-morning-accent)) 55%, transparent);
+  }
+
+  :focus-visible {
+    outline: 1.5px solid currentColor;
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+}
+
+/* ==========================================================================
+   Decorative system
+   ========================================================================== */
+
+@layer components {
+  /* A section's sky. Section sets the --sky-* / --wash / --accent / --ink
+     variables; the gradient blends into its neighbors inside the section
+     padding so there is never a hard edge between sections. */
+  .sky {
+    --blend: var(--spacing-section);
+    position: relative;
+    isolation: isolate;
+    overflow-x: clip;
+    color: var(--ink);
+    background-color: var(--sky-top);
+    background-image:
+      var(--grain),
+      radial-gradient(ellipse 52% 26% at 12% 34%, var(--wash), transparent 70%),
+      radial-gradient(ellipse 34% 18% at 24% 42%, var(--wash), transparent 72%),
+      radial-gradient(ellipse 46% 24% at 88% 64%, var(--wash), transparent 70%),
+      radial-gradient(ellipse 28% 16% at 76% 70%, var(--wash), transparent 74%),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--sky-from), var(--sky-top)) 0%,
+        var(--sky-top) var(--blend),
+        var(--sky-bottom) calc(100% - var(--blend)),
+        color-mix(in oklab, var(--sky-bottom), var(--sky-to)) 100%
+      );
+    background-size: 220px 220px, auto, auto, auto, auto, auto;
+  }
+
+  /* Paper grain on any surface. */
+  .paper-grain {
+    background-image: var(--grain);
+    background-size: 220px 220px;
+  }
+
+  /* A soft, irregular watercolor bloom. Position it absolutely behind content. */
+  .watercolor {
+    border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+    background:
+      radial-gradient(ellipse at 38% 42%, var(--wash) 0%, transparent 62%),
+      radial-gradient(ellipse at 64% 58%, var(--wash) 0%, transparent 58%),
+      radial-gradient(ellipse at 50% 50%, color-mix(in oklab, var(--wash), transparent) 0%, transparent 70%);
+    filter: blur(24px);
+  }
+
+  /* Fine, slightly wobbly hand-drawn rule (see components/Divider). */
+  .divider {
+    color: var(--ink);
+    opacity: 0.38;
+  }
+
+  /* Handwritten accent. Use sparingly. */
+  .hand {
+    display: inline-block;
+    font-family: var(--font-hand);
+    font-size: var(--text-hand);
+    line-height: var(--text-hand--line-height);
+    color: color-mix(in oklab, var(--accent) 45%, var(--ink));
+    rotate: -2deg;
+    transform-origin: left center;
+  }
+
+  /* Underline that draws in on hover/focus. */
+  .link-ink {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    padding-bottom: 2px;
+    transition: background-size var(--duration-gentle) var(--ease-gentle),
+      opacity var(--duration-gentle) var(--ease-gentle);
+  }
+
+  .link-ink:hover,
+  .link-ink:focus-visible {
+    background-size: 100% 1px;
+  }
+}
+
+/* ==========================================================================
+   Motion
+   ========================================================================== */
+
+@layer components {
+  /* Fade-and-rise on scroll (see components/Reveal). */
+  .reveal {
+    opacity: 0;
+    translate: 0 1.25rem;
+    transition:
+      opacity 900ms var(--ease-gentle),
+      translate 1100ms var(--ease-gentle);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .reveal[data-visible="true"] {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    translate: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* ==========================================================================
+   Home: portrait, sketches, call to action
+   ========================================================================== */
+
+@layer components {
+  /* Quiet outlined button. */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.8rem 1.5rem;
+    border: 1px solid color-mix(in oklab, var(--ink) 45%, transparent);
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    background-color: transparent;
+    transition:
+      background-color var(--duration-gentle) var(--ease-gentle),
+      border-color var(--duration-gentle) var(--ease-gentle);
+  }
+
+  .btn-outline:hover,
+  .btn-outline:focus-visible {
+    border-color: color-mix(in oklab, var(--ink) 75%, transparent);
+    background-color: color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
+  .btn-outline:focus-visible {
+    outline-offset: 5px;
+    border-radius: 999px;
+  }
+
+  .btn-outline .btn-arrow {
+    transition: translate var(--duration-gentle) var(--ease-gentle);
+  }
+
+  .btn-outline:hover .btn-arrow,
+  .btn-outline:focus-visible .btn-arrow {
+    translate: 0 2px;
+  }
+
+  /* Pencil/ink botanical sketches. */
+  .sketch {
+    color: color-mix(in oklab, var(--color-golden-accent) 70%, var(--ink));
+    opacity: 0.75;
+  }
+
+  /* An old photograph mounted on paper (see components/PortraitFrame). */
+  .portrait-frame {
+    position: relative;
+    rotate: 2.5deg;
+    filter: drop-shadow(0 1px 1px rgb(56 44 42 / 0.1)) drop-shadow(0 12px 22px rgb(56 44 42 / 0.1));
+    transition: translate 600ms var(--ease-gentle);
+  }
+
+  @media (hover: hover) {
+    .portrait-frame:hover {
+      translate: 0 -3px;
+    }
+  }
+
+  /* The mount itself. The SVG deckle filter roughens its edges. */
+  .portrait-paper {
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in oklab, var(--color-morning-sky) 70%, white);
+    background-image: var(--grain);
+    background-size: 220px 220px;
+    box-shadow: inset 0 0 28px rgb(185 118 88 / 0.1);
+    filter: url(#paper-deckle);
+  }
+
+  .portrait-photo {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgb(56 44 42 / 0.08);
+  }
+
+  .portrait-placeholder {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    background-color: color-mix(in oklab, var(--color-morning-sky-deep) 70%, var(--color-morning-accent));
+    background-image: var(--grain);
+    background-size: 220px 220px;
+    outline: 1px dashed color-mix(in oklab, var(--ink) 35%, transparent);
+    outline-offset: -0.75rem;
+  }
+
+  /* Translucent masking tape with torn ends. */
+  .tape {
+    position: absolute;
+    top: -0.85rem;
+    left: 50%;
+    width: 6.5rem;
+    height: 1.7rem;
+    translate: -50% 0;
+    rotate: -5deg;
+    background-color: color-mix(in oklab, var(--accent) 72%, rgb(255 255 255 / 0.3));
+    background-image:
+      var(--grain),
+      repeating-linear-gradient(90deg, transparent 0 9px, rgb(255 255 255 / 0.18) 9px 10px);
+    background-size: 220px 220px, auto;
+    opacity: 0.85;
+    clip-path: polygon(
+      0 8%, 3% 0, 97% 4%, 100% 14%, 98% 30%, 100% 48%, 97% 66%, 100% 84%, 97% 100%,
+      3% 96%, 0 86%, 2% 70%, 0 52%, 3% 36%, 0 22%
+    );
+  }
+}
+
+/* ==========================================================================
+   Home: ambient decoration motion
+   Transform/opacity only, so everything stays on the compositor. Each element
+   gets its own duration/delay (inline CSS variables) so nothing moves in
+   unison. All of it stops under prefers-reduced-motion.
+   ========================================================================== */
+
+@layer components {
+  /* Wildflower: a soft breeze. */
+  @keyframes sway {
+    from {
+      transform: rotate(-2.5deg);
+    }
+    to {
+      transform: rotate(2.5deg);
+    }
+  }
+
+  /* Leaf sprig: smaller, slower, pivoting from its stem. */
+  @keyframes sway-soft {
+    from {
+      transform: rotate(-2deg);
+    }
+    to {
+      transform: rotate(2.4deg);
+    }
+  }
+
+  /* Watercolor wash behind the portrait slowly spreading and settling. */
+  @keyframes drift {
+    from {
+      transform: translate3d(-2%, 1%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(2%, -2%, 0) scale(1.05);
+    }
+  }
+
+  @keyframes cloud-drift {
+    0% {
+      transform: translate3d(calc(var(--cloud-travel, 40px) * -1), 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -6px, 0);
+    }
+    100% {
+      transform: translate3d(var(--cloud-travel, 40px), 2px, 0);
+    }
+  }
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    30% {
+      opacity: 0.12;
+      transform: scale(0.85);
+    }
+    55% {
+      opacity: 1;
+      transform: scale(1.35);
+    }
+    70% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes petal-drift {
+    0% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    25% {
+      transform: translate3d(14px, 10px, 0) rotate(35deg);
+    }
+    50% {
+      transform: translate3d(4px, 26px, 0) rotate(-15deg);
+    }
+    75% {
+      transform: translate3d(-12px, 18px, 0) rotate(20deg);
+    }
+    100% {
+      transform: translate3d(-4px, 34px, 0) rotate(55deg);
+    }
+  }
+
+  /* The butterfly wanders between a few nearby resting spots... */
+  @keyframes butterfly-path {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(-6deg);
+    }
+    18% {
+      transform: translate3d(24px, -18px, 0) rotate(10deg);
+    }
+    30% {
+      transform: translate3d(28px, -22px, 0) rotate(4deg);
+    }
+    50% {
+      transform: translate3d(-4px, -34px, 0) rotate(-14deg);
+    }
+    62% {
+      transform: translate3d(-6px, -31px, 0) rotate(-9deg);
+    }
+    82% {
+      transform: translate3d(14px, 6px, 0) rotate(6deg);
+    }
+  }
+
+  /* ...flapping in short bursts, then gliding. */
+  @keyframes flap {
+    0%,
+    12%,
+    24%,
+    36%,
+    75%,
+    100% {
+      transform: scaleX(1);
+    }
+    6%,
+    18%,
+    30% {
+      transform: scaleX(0.25);
+    }
+    60% {
+      transform: scaleX(0.75);
+    }
+  }
+
+  .anim-sway {
+    transform-origin: 50% 100%;
+    animation: sway 5.5s ease-in-out infinite alternate;
+  }
+
+  .anim-sway-soft {
+    transform-origin: 0% 100%;
+    animation: sway-soft 7.5s ease-in-out -3s infinite alternate;
+  }
+
+  .anim-drift {
+    animation: drift 16s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  .anim-cloud {
+    animation: cloud-drift var(--cloud-duration, 36s) ease-in-out var(--cloud-delay, 0s) infinite alternate;
+    will-change: transform;
+  }
+
+  .anim-twinkle {
+    animation: twinkle var(--twinkle-duration, 5s) ease-in-out var(--twinkle-delay, 0s) infinite;
+  }
+
+  .anim-petal {
+    animation: petal-drift var(--petal-duration, 12s) ease-in-out var(--petal-delay, 0s) infinite alternate;
+  }
+
+  .butterfly {
+    overflow: visible;
+    animation: butterfly-path 17s ease-in-out infinite;
+  }
+
+  .butterfly .wing {
+    transform-box: fill-box;
+    animation: flap 2.6s ease-in-out infinite;
+  }
+
+  .butterfly .wing-left {
+    transform-origin: right center;
+  }
+
+  .butterfly .wing-right {
+    transform-origin: left center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-sway,
+  .anim-sway-soft,
+  .anim-drift,
+  .anim-cloud,
+  .anim-twinkle,
+  .anim-petal,
+  .butterfly,
+  .butterfly .wing {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Projects: whole-card links. Default is warm parchment-terracotta; hover and
+   keyboard focus lift the card and turn it to ivory.
+   ========================================================================== */
+
+@layer components {
+  .project-card {
+    --card-surface: var(--color-golden-card);
+    --card-ink: var(--color-golden-ink);
+    --card-accent: color-mix(in oklab, var(--color-golden-accent) 55%, var(--color-golden-ink));
+    --card-line: color-mix(in oklab, var(--color-golden-ink) 18%, transparent);
+
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: clamp(1.5rem, 1.1rem + 1vw, 2.1rem);
+    border: 1px solid var(--card-line);
+    border-radius: 10px;
+    color: var(--card-ink);
+    background-color: var(--card-surface);
+    background-image: var(--grain);
+    background-size: 220px 220px;
+    box-shadow:
+      0 1px 2px rgb(68 48 41 / 0.06),
+      0 12px 26px -16px rgb(68 48 41 / 0.4);
+    transition:
+      background-color 300ms var(--ease-gentle),
+      color 300ms var(--ease-gentle),
+      border-color 300ms var(--ease-gentle),
+      box-shadow 300ms var(--ease-gentle),
+      translate 300ms var(--ease-gentle);
+  }
+
+  .project-card:focus-visible {
+    outline-offset: 5px;
+    border-radius: 10px;
+  }
+
+  .project-icon {
+    color: var(--card-accent);
+    transition: color 300ms var(--ease-gentle);
+  }
+
+  .project-arrow {
+    color: var(--card-accent);
+    transition:
+      color 300ms var(--ease-gentle),
+      translate 300ms var(--ease-gentle);
+  }
+
+  .project-tag {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid color-mix(in oklab, var(--card-ink) 22%, transparent);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    background-color: color-mix(in oklab, var(--card-ink) 6%, transparent);
+    transition:
+      border-color 300ms var(--ease-gentle),
+      background-color 300ms var(--ease-gentle);
+  }
+
+  /* Ivory state, shared by hover (pointer devices only) and keyboard focus. */
+  .project-card:focus-visible {
+    --card-surface: var(--color-golden-card-hover);
+    --card-ink: var(--color-morning-ink);
+    --card-accent: var(--color-golden-accent);
+    --card-line: color-mix(in oklab, var(--color-golden-accent) 55%, transparent);
+    translate: 0 -4px;
+    box-shadow:
+      0 2px 4px rgb(68 48 41 / 0.06),
+      0 18px 34px -18px rgb(68 48 41 / 0.45);
+  }
+
+  .project-card:focus-visible .project-arrow {
+    translate: 2px -2px;
+  }
+
+  .project-card:focus-visible .project-tag {
+    border-color: color-mix(in oklab, var(--color-golden-accent) 45%, transparent);
+    background-color: color-mix(in oklab, var(--color-golden-accent) 10%, transparent);
+  }
+
+  @media (hover: hover) {
+    .project-card:hover {
+      --card-surface: var(--color-golden-card-hover);
+      --card-ink: var(--color-morning-ink);
+      --card-accent: var(--color-golden-accent);
+      --card-line: color-mix(in oklab, var(--color-golden-accent) 55%, transparent);
+      translate: 0 -4px;
+      box-shadow:
+        0 2px 4px rgb(68 48 41 / 0.06),
+        0 18px 34px -18px rgb(68 48 41 / 0.45);
+    }
+
+    .project-card:hover .project-arrow {
+      translate: 2px -2px;
+    }
+
+    .project-card:hover .project-tag {
+      border-color: color-mix(in oklab, var(--color-golden-accent) 45%, transparent);
+      background-color: color-mix(in oklab, var(--color-golden-accent) 10%, transparent);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card:hover,
+  .project-card:focus-visible,
+  .project-card:hover .project-arrow,
+  .project-card:focus-visible .project-arrow {
+    translate: none;
+  }
+}
+
+/* Projects: the setting sun, and icon animations that play once each time a
+   card is hovered or keyboard-focused. */
+@layer components {
+  /* The painted washes fade in over the blend with Home and out over the
+     blend with Experience, so the sunset emerges rather than starting at a
+     line. */
+  .sunset-sky > svg {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--spacing-section),
+      #000 calc(100% - var(--spacing-section)),
+      transparent 100%
+    );
+  }
+
+  /* Sketches over the rose sky need a deeper ink than on the morning page. */
+  .sunset-sky .sketch {
+    color: color-mix(in oklab, var(--color-golden-accent) 40%, var(--color-golden-ink));
+    opacity: 0.85;
+  }
+
+  /* Corner bouquets scale with the page margin: their tall stems (the outer
+     ~58% of the artwork) stay within the gutter beside the cards, and on
+     narrow screens they shrink to fit the padding below the last card. */
+  .bouquet {
+    width: clamp(
+      3.5rem,
+      1.6 * ((100vw - min(100vw, var(--container-page))) / 2 + var(--spacing-gutter)),
+      18rem
+    );
+    height: auto;
+  }
+
+  .spray {
+    width: 13rem;
+    height: 13rem;
+  }
+
+  @media (width >= 80rem) {
+    .spray {
+      width: 17rem;
+      height: 17rem;
+    }
+  }
+
+  .sunset-sun {
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--color-golden-sun) 55%, white) 0 24%,
+      color-mix(in oklab, var(--color-golden-sun) 85%, var(--color-golden-coral)) 33%,
+      color-mix(in oklab, var(--color-golden-sun) 55%, transparent) 42%,
+      color-mix(in oklab, var(--color-golden-peach) 25%, transparent) 56%,
+      transparent 72%
+    );
+    filter: blur(1.5px);
+  }
+
+  .project-icon g {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  @keyframes icon-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-7deg); }
+    45% { transform: rotate(6deg); }
+    70% { transform: rotate(-3deg); }
+  }
+
+  @keyframes icon-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    30% { opacity: 0.35; transform: scale(0.9); }
+    60% { opacity: 1; transform: scale(1.18); }
+  }
+
+  @keyframes icon-shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    15% { transform: translateX(-1.2px) rotate(-4deg); }
+    30% { transform: translateX(1.2px) rotate(4deg); }
+    45% { transform: translateX(-0.8px) rotate(-2deg); }
+    60% { transform: translateX(0.6px) rotate(1deg); }
+  }
+
+  @keyframes icon-glint {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+  }
+
+  @keyframes icon-rock {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3.5deg); }
+    60% { transform: rotate(3deg); }
+  }
+
+  @keyframes icon-blink {
+    0%, 30%, 50%, 100% { transform: scaleY(1); }
+    40% { transform: scaleY(0.1); }
+  }
+
+  @keyframes icon-tilt {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(-14deg); }
+    65% { transform: rotate(11deg); }
+  }
+
+  @keyframes icon-bounce {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+    55% { transform: translateY(0); }
+    72% { transform: translateY(-1.5px); }
+  }
+
+  @keyframes icon-swing {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(9deg); }
+    55% { transform: rotate(-6deg); }
+    80% { transform: rotate(2deg); }
+  }
+
+  @keyframes icon-sun-turn {
+    0%, 100% { transform: rotate(0deg); }
+    55% { transform: rotate(28deg); }
+  }
+
+  @keyframes icon-drift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+  }
+
+  /* One play per hover/focus entry: the animation is removed when the
+     pointer or focus leaves, so it restarts on the next visit. */
+  .project-card:is(:hover, :focus-visible) .i-bag {
+    transform-origin: 50% 100%;
+    animation: icon-wiggle 900ms var(--ease-gentle);
+  }
+  .project-card:is(:hover, :focus-visible) .i-waves {
+    transform-origin: 0% 50%;
+    animation: icon-pulse 900ms ease-in-out 120ms;
+  }
+  .project-card:is(:hover, :focus-visible) .i-shield {
+    transform-origin: 50% 100%;
+    animation: icon-shake 650ms ease-in-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-nodes {
+    animation: icon-glint 650ms ease-in-out 250ms;
+  }
+  .project-card:is(:hover, :focus-visible) .i-car {
+    transform-origin: 50% 100%;
+    animation: icon-rock 1000ms ease-in-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-eye {
+    animation: icon-blink 1000ms ease-in-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-phone {
+    animation: icon-tilt 1000ms ease-in-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-pin {
+    transform-origin: 50% 100%;
+    animation: icon-bounce 800ms ease-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-hanger {
+    transform-origin: 50% 0%;
+    animation: icon-swing 1200ms ease-in-out;
+  }
+  /* The sun pivots around its own center (user units on the 48×48 grid). */
+  .project-card:is(:hover, :focus-visible) .i-sun {
+    transform-box: view-box;
+    transform-origin: 19px 21px;
+    animation: icon-sun-turn 1100ms ease-in-out;
+  }
+  .project-card:is(:hover, :focus-visible) .i-cloud {
+    animation: icon-drift 1100ms ease-in-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-icon g {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Experience: dusk landscape, flying birds, and the alternating timeline
+   ========================================================================== */
+
+@layer components {
+  /* The painted sky fades in over the blend with Projects and out over the
+     blend with Skills; the landscape fades into the bottom blend as well. */
+  .dusk-sky {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--spacing-section),
+      #000 calc(100% - var(--spacing-section)),
+      transparent 100%
+    );
+  }
+
+  .dusk-land {
+    mask-image: linear-gradient(to bottom, #000 0, #000 80%, transparent 100%);
+  }
+
+  /* ---- Cards ---- */
+
+  .exp-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: clamp(1.4rem, 1rem + 1vw, 2rem);
+    border: 1px solid var(--color-dusk-card-border);
+    border-radius: 10px;
+    color: var(--color-dusk-card-ink);
+    background-color: var(--color-dusk-card);
+    background-image:
+      radial-gradient(ellipse at 0% 0%, rgb(255 255 255 / 0.16), transparent 60%),
+      var(--grain);
+    background-size: auto, 220px 220px;
+    box-shadow:
+      0 1px 2px rgb(74 60 82 / 0.14),
+      0 16px 34px -18px rgb(74 60 82 / 0.55);
+    transition:
+      background-color 300ms var(--ease-gentle),
+      translate 300ms var(--ease-gentle),
+      box-shadow 300ms var(--ease-gentle);
+  }
+
+  @media (width >= 40rem) {
+    .exp-card {
+      flex-direction: row;
+      gap: 1.4rem;
+    }
+  }
+
+  @media (hover: hover) {
+    .exp-card:hover {
+      background-color: var(--color-dusk-card-hover);
+      translate: 0 -4px;
+      box-shadow:
+        0 2px 5px rgb(74 60 82 / 0.16),
+        0 24px 44px -20px rgb(74 60 82 / 0.65);
+    }
+
+    .exp-card:hover .exp-icon {
+      animation: icon-wiggle 900ms var(--ease-gentle);
+    }
+  }
+
+  .exp-icon {
+    transform-origin: 50% 90%;
+  }
+
+  .exp-meta {
+    color: var(--color-dusk-card-muted);
+  }
+
+  .exp-point {
+    position: relative;
+    padding-left: 1rem;
+  }
+
+  .exp-point::before {
+    content: '';
+    position: absolute;
+    top: 0.68em;
+    left: 0.1rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--color-golden-accent) 75%, var(--color-dusk-card-ink));
+  }
+
+  /* ---- Timeline ----
+     Mobile: one column, line along the left. Desktop: cards alternate either
+     side of a centered line, pulled up to interleave. Markers sit exactly on
+     the line; ExperienceTimeline draws the winding path through them. */
+
+  .timeline {
+    --rail: 0.9rem;
+    --gutter: 2.6rem;
+    --marker: 12px;
+    --anchor: 2.6rem;
+    position: relative;
+    padding-left: var(--gutter);
+  }
+
+  .timeline-item {
+    position: relative;
+  }
+
+  .timeline-item + .timeline-item {
+    margin-top: 2rem;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    top: var(--anchor);
+    left: calc(var(--rail) - var(--gutter) - var(--marker) / 2);
+    width: var(--marker);
+    height: var(--marker);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff6e6 0 30%, var(--color-dusk-line) 70%);
+    opacity: 0.35;
+    transition:
+      opacity 600ms var(--ease-gentle),
+      box-shadow 600ms var(--ease-gentle);
+  }
+
+  .timeline-marker[data-lit='true'] {
+    opacity: 1;
+    box-shadow:
+      0 0 6px 2px rgb(255 214 160 / 0.75),
+      0 0 18px 6px rgb(255 200 140 / 0.35);
+  }
+
+  .timeline-connector {
+    position: absolute;
+    top: calc(var(--anchor) + var(--marker) / 2);
+    left: calc(var(--rail) - var(--gutter));
+    width: calc(var(--gutter) - var(--rail));
+    height: 1px;
+    background: color-mix(in oklab, var(--color-dusk-line) 70%, transparent);
+  }
+
+  .timeline-line path {
+    fill: none;
+    stroke: var(--color-dusk-line);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-opacity: 0.85;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    filter: drop-shadow(0 0 3px rgb(255 210 150 / 0.55));
+  }
+
+  @media (width >= 64rem) {
+    .timeline {
+      --gutter: 3.25rem;
+      display: flex;
+      flex-direction: column;
+      padding-left: 0;
+    }
+
+    .timeline-item {
+      width: calc(50% - var(--gutter));
+    }
+
+    .timeline-item[data-side='right'] {
+      align-self: flex-end;
+    }
+
+    /* Interleave: each card starts partway down its neighbor. */
+    .timeline-item + .timeline-item {
+      margin-top: -9rem;
+    }
+
+    .timeline-item[data-side='left'] .timeline-marker {
+      left: auto;
+      right: calc(0px - var(--gutter) - var(--marker) / 2);
+    }
+
+    .timeline-item[data-side='right'] .timeline-marker {
+      left: calc(0px - var(--gutter) - var(--marker) / 2);
+    }
+
+    .timeline-item[data-side='left'] .timeline-connector {
+      left: auto;
+      right: calc(0px - var(--gutter));
+      width: var(--gutter);
+    }
+
+    .timeline-item[data-side='right'] .timeline-connector {
+      left: calc(0px - var(--gutter));
+      width: var(--gutter);
+    }
+  }
+
+  /* Cards slide in from their own side as they fade up. */
+  .reveal-from-left:not([data-visible='true']) {
+    translate: -1.25rem 0.75rem;
+  }
+
+  .reveal-from-right:not([data-visible='true']) {
+    translate: 1.25rem 0.75rem;
+  }
+
+  @media (width < 64rem) {
+    .reveal-from-right:not([data-visible='true']) {
+      translate: -1.25rem 0.75rem;
+    }
+  }
+
+  /* ---- Birds ----
+     .bird crosses the screen, .bird-bob makes the path rise and fall,
+     .bird-wing beats in bursts with glides between. */
+
+  @keyframes bird-cross {
+    from {
+      transform: translateX(-12vw);
+    }
+    to {
+      transform: translateX(108vw);
+    }
+  }
+
+  @keyframes bird-bob {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-3deg);
+    }
+    50% {
+      transform: translateY(var(--bird-bob)) rotate(4deg);
+    }
+  }
+
+  @keyframes bird-flap {
+    0%,
+    16%,
+    32%,
+    48%,
+    100% {
+      transform: scaleY(1);
+    }
+    8%,
+    24%,
+    40% {
+      transform: scaleY(-0.65);
+    }
+    /* Glide: wings held nearly level. */
+    60%,
+    92% {
+      transform: scaleY(0.3);
+    }
+  }
+
+  .bird {
+    position: absolute;
+    left: 0;
+    animation: bird-cross var(--bird-speed) linear var(--bird-delay) infinite;
+    will-change: transform;
+  }
+
+  .bird[data-direction='left'] {
+    animation-direction: reverse;
+  }
+
+  .bird[data-direction='left'] .bird-body {
+    scale: -1 1;
+  }
+
+  .bird-bob {
+    animation: bird-bob var(--bird-bob-speed) ease-in-out var(--bird-delay) infinite;
+  }
+
+  .bird-wing {
+    transform-box: fill-box;
+    transform-origin: 90% 100%;
+    animation: bird-flap var(--bird-flap) ease-in-out var(--bird-delay) infinite;
+  }
+
+  .bird-wing-far {
+    animation-delay: calc(var(--bird-delay) - 0.08s);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bird,
+  .bird-bob,
+  .bird-wing,
+  .exp-card:hover .exp-icon {
+    animation: none !important;
+  }
+
+  /* Birds rest, wings level, scattered across the sky. */
+  .bird {
+    transform: translateX(var(--bird-rest));
+  }
+
+  .bird-wing {
+    transform: scaleY(0.3);
+  }
+
+  .exp-card:hover,
+  .reveal-from-left:not([data-visible='true']),
+  .reveal-from-right:not([data-visible='true']) {
+    translate: none;
+  }
+}
+
+/* ==========================================================================
+   Skills: moonlit terrace, rain, and the three skill panels
+   Everything here is scoped to Skills-only class names.
+   ========================================================================== */
+
+@layer components {
+  /* The painted sky emerges over the blend with Experience and dissolves
+     into the blend with Contact, so dusk deepens into night without a seam. */
+  .terrace-sky {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--spacing-section),
+      #000 calc(100% - var(--spacing-section)),
+      transparent 100%
+    );
+  }
+
+  .terrace-land {
+    mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+  }
+
+  .terrace-star {
+    border-radius: 50%;
+    background: var(--color-blue-ivory);
+    box-shadow: 0 0 6px 1px rgb(247 240 227 / 0.6);
+  }
+
+  .moon-halo {
+    position: absolute;
+    inset: -70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(255 236 200 / 0.32) 0, rgb(255 228 180 / 0.12) 35%, transparent 65%);
+    animation: moon-glow 9s ease-in-out infinite alternate;
+  }
+
+  @keyframes moon-glow {
+    from {
+      opacity: 0.75;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1.03);
+    }
+  }
+
+  .terrace-lantern {
+    position: absolute;
+  }
+
+  .lantern-glow {
+    position: absolute;
+    inset: -160% -260%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, rgb(255 205 140 / 0.42) 0, rgb(213 163 107 / 0.16) 30%, transparent 62%);
+    animation: lantern-flicker 4.2s ease-in-out infinite;
+  }
+
+  .lantern-flame {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: flame-flicker 2.6s ease-in-out infinite;
+  }
+
+  @keyframes lantern-flicker {
+    0%, 100% { opacity: 0.92; }
+    22% { opacity: 1; }
+    40% { opacity: 0.86; }
+    63% { opacity: 0.97; }
+    80% { opacity: 0.9; }
+  }
+
+  @keyframes flame-flicker {
+    0%, 100% { transform: scale(1, 1); }
+    30% { transform: scale(0.94, 1.06); }
+    55% { transform: scale(1.04, 0.95); }
+    78% { transform: scale(0.97, 1.03); }
+  }
+
+  .lake-shimmer {
+    animation: lake-shimmer 5s ease-in-out infinite alternate;
+  }
+
+  @keyframes lake-shimmer {
+    from {
+      opacity: 0.7;
+      transform: translateX(-1.5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(1.5px);
+    }
+  }
+
+  .terrace-steam {
+    animation: steam-rise 4s ease-in-out infinite;
+  }
+
+  @keyframes steam-rise {
+    0%, 100% { opacity: 0.35; transform: translateY(0); }
+    50% { opacity: 0.8; transform: translateY(-2px); }
+  }
+
+  /* ---- Panels ---- */
+
+  .skill-panel {
+    position: relative;
+    padding: clamp(3.25rem, 2.6rem + 2vw, 4.25rem) clamp(1rem, 0.4rem + 2.4vw, 2.25rem) clamp(1.75rem, 1.2rem + 1.5vw, 2.5rem);
+    border: 1px solid rgb(247 240 227 / 0.32);
+    border-radius: 14px;
+    background:
+      linear-gradient(160deg, rgb(119 124 163 / 0.16), transparent 55%),
+      rgb(23 38 56 / 0.58);
+    backdrop-filter: blur(3px);
+    box-shadow:
+      inset 0 0 0 4px rgb(247 240 227 / 0.04),
+      0 18px 40px -24px rgb(8 12 24 / 0.8);
+  }
+
+  .skill-flourish {
+    position: absolute;
+    width: 1.6rem;
+    height: 1.6rem;
+    color: rgb(247 240 227 / 0.4);
+  }
+
+  /* Parchment ribbon straddling the panel's top edge. */
+  .skill-label {
+    position: absolute;
+    top: 0;
+    left: clamp(0.75rem, 3vw, 2rem);
+    translate: 0 -50%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 2.6rem 0.55rem 3.9rem;
+    color: #3d2f2a;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.5), transparent 60%),
+      linear-gradient(#f3e6cd, #e2cfae);
+    background-blend-mode: normal;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 0.9rem) 50%, 100% 100%, 0 100%, 0.9rem 50%);
+    filter: drop-shadow(0 4px 10px rgb(8 12 24 / 0.45));
+  }
+
+  .skill-label::before {
+    content: '';
+    position: absolute;
+    inset: 4px 1.1rem;
+    border-block: 1px solid rgb(122 90 60 / 0.35);
+    pointer-events: none;
+  }
+
+  .skill-emblem {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    width: 3.4rem;
+    height: 3.4rem;
+    translate: 0 -50%;
+  }
+
+  .skill-label-number {
+    font-family: var(--font-hand);
+    font-size: 1rem;
+    color: rgb(61 47 42 / 0.7);
+  }
+
+  /* ---- Logo grid ---- */
+
+  .skill-grid {
+    --item: 5.5rem;
+    --gap-x: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.4rem var(--gap-x);
+    max-width: calc(var(--cols) * var(--item) + (var(--cols) - 1) * var(--gap-x));
+    margin-inline: auto;
+  }
+
+  .skill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    width: var(--item);
+    opacity: 0;
+    translate: 0 0.5rem;
+    transition:
+      opacity 500ms var(--ease-gentle),
+      translate 500ms var(--ease-gentle);
+    transition-delay: calc(180ms + var(--i) * 30ms);
+  }
+
+  .reveal[data-visible='true'] .skill {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .skill-tile {
+    display: grid;
+    place-items: center;
+    width: 3.9rem;
+    height: 3.9rem;
+    border: 1px solid rgb(247 240 227 / 0.5);
+    border-radius: 12px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.55), transparent 70%),
+      rgb(232 228 242 / 0.86);
+    box-shadow: 0 6px 14px -8px rgb(8 12 24 / 0.7);
+    transition:
+      translate 300ms var(--ease-gentle),
+      rotate 300ms var(--ease-gentle),
+      background-color 300ms var(--ease-gentle),
+      box-shadow 300ms var(--ease-gentle);
+  }
+
+  .skill-logo {
+    width: 2.35rem;
+    height: 2.35rem;
+    object-fit: contain;
+  }
+
+  .skill-name {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--color-blue-ivory);
+    text-wrap: balance;
+  }
+
+  @media (hover: hover) {
+    .skill:hover .skill-tile {
+      translate: 0 -4px;
+      rotate: -3deg;
+      background-color: rgb(248 245 252 / 0.97);
+      box-shadow:
+        0 10px 20px -10px rgb(8 12 24 / 0.8),
+        0 0 0 1px rgb(247 240 227 / 0.7),
+        0 0 18px 2px rgb(247 236 214 / 0.35);
+    }
+
+    .skill:nth-child(even):hover .skill-tile {
+      rotate: 3deg;
+    }
+
+    .skill[data-ai]:hover .skill-tile {
+      box-shadow:
+        0 10px 20px -10px rgb(8 12 24 / 0.8),
+        0 0 0 1px rgb(214 196 236 / 0.85),
+        0 0 24px 5px rgb(183 159 214 / 0.55);
+    }
+  }
+
+  @media (width < 40rem) {
+    .skill-panel {
+      padding-inline: 0.75rem;
+    }
+
+    .skill-grid {
+      --item: 4.15rem;
+      row-gap: 1.2rem;
+    }
+
+    .skill-tile {
+      width: 3.3rem;
+      height: 3.3rem;
+    }
+
+    .skill-logo {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .skill-name {
+      font-size: 0.75rem;
+    }
+
+    .skill-label {
+      padding: 0.5rem 1.9rem 0.5rem 3.4rem;
+    }
+
+    .skill-emblem {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moon-halo,
+  .lantern-glow,
+  .lantern-flame,
+  .lake-shimmer,
+  .terrace-steam {
+    animation: none;
+  }
+
+  .skill {
+    opacity: 1;
+    translate: none;
+  }
+
+  .skill:hover .skill-tile {
+    translate: none;
+    rotate: none;
+  }
+}
+
+/* ==========================================================================
+   Contact: the rainy telephone booth
+   Everything here is scoped to Contact-only class names.
+   ========================================================================== */
+
+@layer components {
+  /* The painted sky emerges over the blend with Skills, so the terrace's
+     night simply carries on down the street. */
+  .street-sky {
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--spacing-section), #000 100%);
+  }
+
+  .street-shore {
+    mask-image: linear-gradient(to bottom, transparent 0, #000 25%);
+  }
+
+  /* Wet cobblestones: two offset rows of rounded stones with a cool sheen,
+     lamp-lit streaks pooling under the booth, all on dark wet ground. */
+  .street-cobbles {
+    background:
+      radial-gradient(ellipse 22% 70% at 22% 0%, rgb(242 181 110 / 0.38), transparent 70%),
+      radial-gradient(ellipse 10% 90% at 40% 0%, rgb(255 217 160 / 0.22), transparent 70%),
+      radial-gradient(ellipse 12% 80% at 92% 0%, rgb(255 217 160 / 0.16), transparent 70%),
+      radial-gradient(ellipse 19px 9px at 50% 45%, rgb(150 160 196 / 0.22), transparent 60%),
+      radial-gradient(ellipse 22px 11px at 50% 50%, #26344d 75%, transparent 80%),
+      radial-gradient(ellipse 19px 9px at 50% 45%, rgb(150 160 196 / 0.22), transparent 60%),
+      radial-gradient(ellipse 22px 11px at 50% 50%, #22304a 75%, transparent 80%),
+      linear-gradient(#141f30, #0b121e);
+    background-size: auto, auto, auto, 50px 28px, 50px 28px, 50px 28px, 50px 28px, auto;
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 25px 14px, 25px 14px, 0 0;
+    mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+  }
+
+  .street-facade {
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12%);
+  }
+
+  .facade-wisteria {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: sway-soft 10s ease-in-out infinite alternate;
+  }
+
+  .street-puddle {
+    position: absolute;
+    height: 0.9rem;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgb(255 217 160 / 0.35), rgb(119 124 163 / 0.18) 60%, transparent 72%);
+    animation: puddle-shimmer 6s ease-in-out infinite alternate;
+  }
+
+  .street-puddle::after {
+    content: '';
+    position: absolute;
+    inset: 25% 35%;
+    border: 1px solid rgb(247 240 227 / 0.5);
+    border-radius: 50%;
+    opacity: 0;
+    animation: puddle-ripple 4.5s ease-out var(--ripple-delay, 0s) infinite;
+  }
+
+  @keyframes puddle-shimmer {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
+  }
+
+  @keyframes puddle-ripple {
+    0%, 70% { opacity: 0; transform: scale(0.3); }
+    74% { opacity: 0.8; }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
+
+  /* ---- Layout ----
+     Phones: heading, booth, form. Desktop: booth on the left (about 45%),
+     heading and form on the right. */
+  .contact-layout {
+    display: grid;
+    grid-template-areas: 'heading' 'booth' 'note';
+    row-gap: 2.5rem;
+  }
+
+  .contact-heading { grid-area: heading; }
+  .contact-booth {
+    grid-area: booth;
+    justify-self: center;
+    width: min(100%, 22rem);
+  }
+  .contact-note { grid-area: note; }
+
+  @media (width >= 64rem) {
+    .contact-layout {
+      grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+      grid-template-areas: 'booth heading' 'booth note';
+      grid-template-rows: auto 1fr;
+      column-gap: clamp(2rem, 4vw, 4.5rem);
+      row-gap: 2.75rem;
+    }
+
+    .contact-booth {
+      align-self: end;
+      width: 100%;
+      max-width: 34rem;
+      margin-bottom: -0.5rem;
+    }
+  }
+
+  /* ---- The booth's quiet animation ---- */
+
+  .booth-bloom {
+    animation: booth-glow 7s ease-in-out infinite alternate;
+  }
+
+  @keyframes booth-glow {
+    from { opacity: 0.22; }
+    to { opacity: 0.32; }
+  }
+
+  .booth-sign,
+  .lamp-halo {
+    animation: lantern-flicker 5s ease-in-out infinite;
+  }
+
+  .booth-drip {
+    stroke-dasharray: 6 60;
+    animation: booth-drip linear infinite;
+  }
+
+  @keyframes booth-drip {
+    from { stroke-dashoffset: 6; opacity: 0.9; }
+    to { stroke-dashoffset: -40; opacity: 0; }
+  }
+
+  .booth-flowers {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: sway-soft 9s ease-in-out infinite alternate;
+  }
+
+  .contact-footer {
+    margin-top: clamp(1.5rem, 3vw, 2.5rem);
+    color: rgb(247 237 224 / 0.85);
+    background: linear-gradient(transparent, rgb(8 12 22 / 0.55));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .street-puddle,
+  .street-puddle::after,
+  .booth-bloom,
+  .booth-sign,
+  .lamp-halo,
+  .booth-drip,
+  .booth-flowers,
+  .facade-wisteria {
+    animation: none;
+  }
+}
+
+/* Contact: the interactive booth and the telephone directory. */
+@layer components {
+  .booth-button {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: translate 400ms var(--ease-gentle), filter 400ms var(--ease-gentle);
+  }
+
+  .booth-button:focus-visible {
+    outline: 2px solid var(--color-blue-ivory);
+    outline-offset: 6px;
+  }
+
+  .booth-phone {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+  }
+
+  @keyframes phone-ring {
+    0%, 100% { transform: rotate(0); }
+    10%, 30%, 50% { transform: rotate(-7deg); }
+    20%, 40%, 60% { transform: rotate(7deg); }
+    75% { transform: rotate(-2deg); }
+  }
+
+  @keyframes booth-flash {
+    0% { filter: brightness(1); }
+    35% { filter: brightness(1.22) drop-shadow(0 0 24px rgb(255 205 140 / 0.55)); }
+    100% { filter: brightness(1); }
+  }
+
+  @media (hover: hover) {
+    .booth-button:hover {
+      translate: 0 -3px;
+      filter: brightness(1.08) drop-shadow(0 0 18px rgb(255 205 140 / 0.3));
+    }
+
+    .booth-button:hover .booth-phone {
+      animation: phone-ring 900ms ease-in-out;
+    }
+
+    .booth-button:hover .booth-bloom {
+      opacity: 0.4;
+    }
+  }
+
+  /* An incoming call: the booth rattles in two short bursts, then rests,
+     like a ringing phone, until it's answered. */
+  .booth-body {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  @keyframes booth-call {
+    0%, 30%, 40%, 70%, 100% { transform: rotate(0); }
+    3%, 9%, 15%, 21%, 27% { transform: rotate(-1.4deg) translateX(-1px); }
+    6%, 12%, 18%, 24% { transform: rotate(1.4deg) translateX(1px); }
+    43%, 49%, 55%, 61%, 67% { transform: rotate(-1.4deg) translateX(-1px); }
+    46%, 52%, 58%, 64% { transform: rotate(1.4deg) translateX(1px); }
+  }
+
+  .booth-button[data-calling] .booth-body {
+    animation: booth-call 2.6s ease-in-out infinite;
+  }
+
+  .booth-button[data-calling] .booth-bloom {
+    animation: booth-glow 1.3s ease-in-out infinite alternate;
+  }
+
+  .booth-button[data-ringing] {
+    animation: booth-flash 800ms var(--ease-gentle);
+  }
+
+  .booth-button[data-ringing] .booth-phone {
+    animation: phone-ring 800ms ease-in-out;
+  }
+
+  /* Handwritten invitation with an arrow back toward the booth. */
+  .contact-prompt {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    font-family: var(--font-hand);
+    font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.75rem);
+    color: rgb(247 236 214 / 0.85);
+    rotate: -2deg;
+    transition: opacity 400ms var(--ease-gentle), color 300ms var(--ease-gentle), scale 300ms var(--ease-gentle);
+  }
+
+  .prompt-arrow {
+    width: 3.5rem;
+    flex-shrink: 0;
+    color: #f2d39a;
+  }
+
+  /* Stacked layout: the booth is above, so the arrow points up. */
+  @media (width < 64rem) {
+    .prompt-arrow {
+      rotate: 60deg;
+    }
+  }
+
+  .contact-layout:has(.booth-button:hover) .contact-prompt {
+    color: #fff4dc;
+    scale: 1.04;
+  }
+
+  .contact-prompt[data-hidden] {
+    opacity: 0.35;
+  }
+
+  /* ---- Open page ---- */
+
+  .directory-page {
+    position: relative;
+    padding: clamp(1.75rem, 1.2rem + 2vw, 2.75rem) clamp(1.25rem, 0.6rem + 2.6vw, 2.75rem) clamp(1.5rem, 1rem + 1.4vw, 2.25rem);
+    color: #3b2f2a;
+    transform-origin: 0% 50%;
+    filter: drop-shadow(0 22px 34px rgb(5 9 18 / 0.55)) drop-shadow(0 2px 3px rgb(5 9 18 / 0.3));
+    animation: directory-open 650ms var(--ease-gentle) both;
+  }
+
+  /* Rises into view, unfolding slightly as it settles. */
+  @keyframes directory-open {
+    from {
+      opacity: 0;
+      transform: perspective(1400px) translateY(2.5rem) rotateX(14deg);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+      transform: perspective(1400px) translateY(0) rotateX(0);
+    }
+  }
+
+  .directory-sheet {
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+    background:
+      radial-gradient(ellipse at 15% 10%, rgb(255 251 240 / 0.7), transparent 55%),
+      radial-gradient(ellipse at 90% 95%, rgb(196 156 104 / 0.22), transparent 55%),
+      var(--grain),
+      linear-gradient(#f6ecd8, #ead9bb);
+    background-size: auto, auto, 220px 220px, auto;
+    box-shadow: inset 0 0 40px rgb(150 108 62 / 0.2), inset 0 0 0 7px rgb(255 255 255 / 0), inset 0 0 0 8px rgb(150 108 62 / 0.25);
+    clip-path: polygon(
+      0.6% 1.2%, 8% 0.4%, 18% 1%, 30% 0.2%, 44% 0.9%, 58% 0.3%, 71% 1%, 84% 0.2%, 95% 0.8%, 99.5% 0.3%,
+      99.2% 12%, 99.8% 27%, 99.1% 41%, 99.7% 56%, 99.2% 70%, 99.8% 84%, 99.3% 99.2%,
+      90% 99.8%, 77% 99.1%, 62% 99.7%, 48% 99.2%, 34% 99.8%, 20% 99.1%, 8% 99.7%, 0.4% 99.2%,
+      0.9% 86%, 0.2% 71%, 0.8% 56%, 0.2% 41%, 0.9% 26%, 0.3% 12%
+    );
+  }
+
+  .directory-clip {
+    position: absolute;
+    top: -0.9rem;
+    left: 18%;
+    width: 1.1rem;
+    rotate: 8deg;
+    z-index: 1;
+  }
+
+  .directory-stamps {
+    position: absolute;
+    top: 0.7rem;
+    right: 4.6rem;
+    width: 3rem;
+    rotate: 7deg;
+    opacity: 0.85;
+  }
+
+  .directory-close {
+    position: absolute;
+    z-index: 2;
+    top: -0.5rem;
+    right: -0.75rem;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    color: #5a4a40;
+    cursor: pointer;
+    transition: background-color 200ms, color 200ms;
+  }
+
+  .directory-close svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .directory-close:hover {
+    color: #2a3a5e;
+    background: rgb(110 82 62 / 0.1);
+  }
+
+  .directory-close:focus-visible,
+  .directory-entry:focus-visible {
+    outline: 2px solid #2a3a5e;
+    outline-offset: 3px;
+  }
+
+  .directory-heading {
+    padding-right: 4.5rem;
+    font-family: var(--font-hand);
+    font-size: clamp(1.9rem, 1.5rem + 1.4vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+    color: #2f2a3b;
+    rotate: -1.5deg;
+  }
+
+  .directory-heading:focus {
+    outline: none;
+  }
+
+  .directory-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    color: rgb(110 82 62 / 0.6);
+  }
+
+  .directory-divider span {
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .directory-entries {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.4rem;
+  }
+
+  /* Each entry is a small paper slip. */
+  .directory-entry {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.7rem, 0.4rem + 1vw, 1.1rem);
+    padding: 0.85rem clamp(0.8rem, 0.5rem + 1vw, 1.2rem);
+    border: 1px solid rgb(150 108 62 / 0.28);
+    border-radius: 4px;
+    background: rgb(255 251 242 / 0.6);
+    box-shadow: 0 2px 4px -2px rgb(80 56 36 / 0.25);
+    transition:
+      translate 300ms var(--ease-gentle),
+      background-color 300ms var(--ease-gentle),
+      box-shadow 300ms var(--ease-gentle);
+  }
+
+  .entry-number {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: #8a6a4e;
+  }
+
+  .entry-art {
+    width: clamp(3rem, 2.6rem + 1.5vw, 3.75rem);
+    flex-shrink: 0;
+    transition: rotate 300ms var(--ease-gentle);
+  }
+
+  .entry-title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+    line-height: 1.15;
+    color: #2b2422;
+  }
+
+  .entry-subtitle {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.9rem;
+    color: #5a4a40;
+  }
+
+  .entry-arrow {
+    width: 1.4rem;
+    flex-shrink: 0;
+    color: #6e523e;
+    transition: translate 300ms var(--ease-gentle);
+  }
+
+  @media (hover: hover) {
+    .directory-entry:hover {
+      translate: 0 -4px;
+      background: rgb(250 228 196 / 0.75);
+      box-shadow: 0 10px 18px -8px rgb(80 56 36 / 0.4);
+    }
+
+    .directory-entry:hover .entry-art {
+      rotate: -4deg;
+    }
+
+    .directory-entry:hover .entry-arrow {
+      translate: 4px 0;
+    }
+  }
+
+  .directory-signoff {
+    margin-top: 1.5rem;
+    font-family: var(--font-hand);
+    font-size: 1.6rem;
+    line-height: 1.15;
+    text-align: right;
+    color: #4a3d5a;
+    rotate: -2deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-button,
+  .booth-button .booth-phone,
+  .booth-button .booth-body,
+  .directory-page {
+    animation: none !important;
+  }
+
+  .booth-button:hover,
+  .directory-entry:hover,
+  .directory-entry:hover .entry-arrow {
+    translate: none;
+  }
+
+  .directory-entry:hover .entry-art {
+    rotate: none;
+  }
+}
+
+/* Floating back-to-top button: hidden until the top navigation is out of
+   view, and only while the page is at rest (see components/BackToTop). */
+@layer components {
+  .back-to-top {
+    position: fixed;
+    z-index: 50;
+    right: calc(1.5rem + env(safe-area-inset-right, 0px));
+    bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid #c9a46a;
+    border-radius: 50%;
+    color: #3b2f3a;
+    background:
+      radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.6), transparent 60%),
+      var(--grain),
+      linear-gradient(#f8f0e1, #ece0f0);
+    background-size: auto, 220px 220px, auto;
+    box-shadow:
+      inset 0 0 0 3px rgb(255 255 255 / 0.35),
+      inset 0 0 0 4px rgb(201 164 106 / 0.35),
+      0 6px 16px -6px rgb(12 16 30 / 0.55);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    translate: 0 6px;
+    transition:
+      opacity 280ms var(--ease-gentle),
+      translate 280ms var(--ease-gentle),
+      box-shadow 250ms var(--ease-gentle),
+      filter 250ms var(--ease-gentle),
+      visibility 0s linear 280ms;
+  }
+
+  .back-to-top[data-visible='true'] {
+    opacity: 1;
+    visibility: visible;
+    translate: 0 0;
+    transition:
+      opacity 280ms var(--ease-gentle),
+      translate 280ms var(--ease-gentle),
+      box-shadow 250ms var(--ease-gentle),
+      filter 250ms var(--ease-gentle),
+      visibility 0s;
+  }
+
+  .back-to-top:focus-visible {
+    outline: 2px solid #f7f0e3;
+    outline-offset: 3px;
+  }
+
+  .back-to-top-arrow {
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-top: 0.1rem;
+    transition: translate 250ms var(--ease-gentle);
+  }
+
+  .back-to-top-label {
+    margin-top: -0.2rem;
+    font-family: var(--font-hand);
+    font-size: 0.8rem;
+    line-height: 1;
+  }
+
+  @media (hover: hover) {
+    .back-to-top[data-visible='true']:hover {
+      translate: 0 -3px;
+      filter: brightness(1.06);
+      box-shadow:
+        inset 0 0 0 3px rgb(255 255 255 / 0.35),
+        inset 0 0 0 4px rgb(201 164 106 / 0.5),
+        0 10px 22px -8px rgb(12 16 30 / 0.65);
+    }
+
+    .back-to-top:hover .back-to-top-arrow {
+      translate: 0 -2px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top,
+  .back-to-top[data-visible='true'] {
+    translate: none;
+  }
+
+  .back-to-top:hover .back-to-top-arrow {
+    translate: none;
+  }
+}
